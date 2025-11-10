@@ -25,10 +25,13 @@ func runDNS(cmd *cobra.Command, args []string) error {
 
 	if pluginopts.Domainlist != "" {
 		//fmt.Println(pluginopts.Domainlist)
-		lines := getContent(pluginopts.Domainlist)
+		lines, err := getContent(pluginopts.Domainlist)
+		if err != nil {
+			return fmt.Errorf("error on reading domainlist file: %w", err)
+		}
 		for _, value := range lines{
 			pluginopts.Domain = value
-			fmt.Println(value+"::")
+			//fmt.Println(value+"::")
 			plugin, err := gobusterdns.NewGobusterDNS(globalopts, pluginopts)
 			if err != nil {
 				return fmt.Errorf("error on creating gobusterdns: %w", err)
@@ -138,11 +141,13 @@ func init() {
 }
 
 
-func getContent (filename string) []string{
+func getContent(filename string) ([]string, error) {
 	content, err := ioutil.ReadFile(filename)
 	if err != nil {
-		//Do something
+		return nil, err
 	}
-	lines :=strings.Split(string(content), "\r\n")
-	return lines
+	text := strings.ReplaceAll(string(content), "\r\n", "\n")
+	text = strings.ReplaceAll(text, "\r", "\n")
+	lines := strings.Split(text, "\n")
+	return lines, nil
 }
